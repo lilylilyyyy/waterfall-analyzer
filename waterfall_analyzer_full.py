@@ -871,7 +871,7 @@ html_content += f"""
         <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 15px; margin-bottom: 15px; border-radius: 4px;">
             <span style="font-size: 18px;">💡</span>
             <span style="color: #856404; font-size: 14px; margin-left: 8px;">
-                <strong>分析说明：</strong>以下展示基于总毛利排序的TOP20维保项目的环比对比，帮助识别维保业务增长或下降的主要原因
+                <strong>分析说明：</strong>以下展示基于总毛利排序的TOP20维保项目的环比对比，帮助识别维保业务增长或下降的主要原因，当月/上月均取值于工时零件商品数量而非台次，下同
             </span>
         </div>
         <table class="data-table">
