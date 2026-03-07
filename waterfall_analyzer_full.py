@@ -1638,7 +1638,9 @@ html_content += f"""
             var option = {{
                 tooltip: {{
                     trigger: 'item',
-                    formatter: '{{b}}: {{c}} ({{d}}%)'
+                    formatter: function(params) {{
+                        return params.name + ': ' + params.value.toFixed(2) + ' (' + params.percent.toFixed(2) + '%)';
+                    }}
                 }},
                 color: colors,
                 series: [
@@ -1653,7 +1655,9 @@ html_content += f"""
                         }},
                         label: {{
                             show: true,
-                            formatter: '{{b}}\\n{{c}}'
+                            formatter: function(params) {{
+                                return params.name + '\\n' + params.value.toFixed(2);
+                            }}
                         }},
                         data: data.map(item => ({{
                             name: item.name,
