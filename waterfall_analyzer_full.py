@@ -859,7 +859,7 @@ for i, cat in enumerate(taici_categories):
                     <td class="category">{cat}</td>
                     <td>{current:.2f}</td>
                     <td>{last:.2f}</td>
-                    <td class="{change_class}">{change:+.0f}</td>
+                    <td class="{change_class}">{change:+.2f}</td>
                     <td class="{change_class}">{change_rate:+.2f}%</td>
                 </tr>"""
 
@@ -947,7 +947,7 @@ for i, cat in enumerate(hunhe_categories):
                     <td class="category">{cat}</td>
                     <td>{current:.2f}</td>
                     <td>{last:.2f}</td>
-                    <td class="{change_class}">{change:+.0f}</td>
+                    <td class="{change_class}">{change:+.2f}</td>
                     <td class="{change_class}">{change_rate:+.2f}%</td>
                 </tr>"""
 
@@ -1035,7 +1035,7 @@ for i, cat in enumerate(neibu_categories):
                     <td class="category">{cat}</td>
                     <td>{current:.2f}</td>
                     <td>{last:.2f}</td>
-                    <td class="{change_class}">{change:+.0f}</td>
+                    <td class="{change_class}">{change:+.2f}</td>
                     <td class="{change_class}">{change_rate:+.2f}%</td>
                 </tr>"""
 
