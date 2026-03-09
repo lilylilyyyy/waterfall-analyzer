@@ -1752,7 +1752,7 @@ html_content += f"""
 </html>"""
 
 # 保存 HTML 文件
-with open(config['output_html_path'], "w", encoding="utf-8") as f
+with open(config['output_html_path'], "w", encoding="utf-8") as f:
     f.write(html_content)
 
 print(f"Success! Waterfall analysis HTML file generated: {config['output_html_path']}")
