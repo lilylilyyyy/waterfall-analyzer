@@ -859,7 +859,7 @@ for i, cat in enumerate(taici_categories):
                     <td class="category">{cat}</td>
                     <td>{current:.2f}</td>
                     <td>{last:.2f}</td>
-                    <td class="{change_class}">{change:+.0f}</td>
+                    <td class="{change_class}">{change:+.2f}</td>
                     <td class="{change_class}">{change_rate:+.2f}%</td>
                 </tr>"""
 
@@ -947,7 +947,7 @@ for i, cat in enumerate(hunhe_categories):
                     <td class="category">{cat}</td>
                     <td>{current:.2f}</td>
                     <td>{last:.2f}</td>
-                    <td class="{change_class}">{change:+.0f}</td>
+                    <td class="{change_class}">{change:+.2f}</td>
                     <td class="{change_class}">{change_rate:+.2f}%</td>
                 </tr>"""
 
@@ -1035,7 +1035,7 @@ for i, cat in enumerate(neibu_categories):
                     <td class="category">{cat}</td>
                     <td>{current:.2f}</td>
                     <td>{last:.2f}</td>
-                    <td class="{change_class}">{change:+.0f}</td>
+                    <td class="{change_class}">{change:+.2f}</td>
                     <td class="{change_class}">{change_rate:+.2f}%</td>
                 </tr>"""
 
@@ -1752,7 +1752,7 @@ html_content += f"""
 </html>"""
 
 # 保存 HTML 文件
-with open(config['output_html_path'], "w", encoding="utf-8") as f:
+with open(config['output_html_path'], "w", encoding="utf-8") as f
     f.write(html_content)
 
 print(f"Success! Waterfall analysis HTML file generated: {config['output_html_path']}")
