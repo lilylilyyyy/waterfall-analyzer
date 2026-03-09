@@ -1,12 +1,6 @@
 import openpyxl
 import json
 import os
-# ===== 安全数值转换（避免Excel #DIV/0! 等错误导致程序崩溃） =====
-def safe_float(value):
-    try:
-        return safe_float(value)
-    except:
-        return 0.0
 
 # 加载配置文件
 config_path = os.path.join(os.path.dirname(__file__), 'config.json')
@@ -62,8 +56,8 @@ for row in range(8, 14):  # 8到13行
 
     if cat:
         taici_categories.append(str(cat))
-        taici_current.append(safe_float(current) if current is not None else 0)
-        taici_last.append(safe_float(last) if last is not None else 0)
+        taici_current.append(float(current) if current is not None else 0)
+        taici_last.append(float(last) if last is not None else 0)
 
 # 读取混合维修环比变化数据 (B22:B27, U22:U27, V22:V27)
 hunhe_categories = []
@@ -77,8 +71,8 @@ for row in range(22, 28):  # 22到27行
 
     if cat:
         hunhe_categories.append(str(cat))
-        hunhe_current.append(safe_float(current) if current is not None else 0)
-        hunhe_last.append(safe_float(last) if last is not None else 0)
+        hunhe_current.append(float(current) if current is not None else 0)
+        hunhe_last.append(float(last) if last is not None else 0)
 
 # 读取内部维修环比变化数据 (C37:C44, U37:U44, V37:V44)
 neibu_categories = []
@@ -92,8 +86,8 @@ for row in range(37, 45):  # 37到44行
 
     if cat:
         neibu_categories.append(str(cat))
-        neibu_current.append(safe_float(current) if current is not None else 0)
-        neibu_last.append(safe_float(last) if last is not None else 0)
+        neibu_current.append(float(current) if current is not None else 0)
+        neibu_last.append(float(last) if last is not None else 0)
 
 # 读取门店运营成本分析数据 (C45:C137, U45:U137, V45:V137)
 mendian_data = []
@@ -130,8 +124,8 @@ for row in range(45, 138):  # 45到137行
         try:
             mendian_data.append({
                 'category': str(cat),
-                'current': safe_float(current) if current is not None and str(current) != '#REF!' else 0,
-                'last': safe_float(last) if last is not None and str(last) != '#REF!' else 0,
+                'current': float(current) if current is not None and str(current) != '#REF!' else 0,
+                'last': float(last) if last is not None and str(last) != '#REF!' else 0,
                 'level': level
             })
         except (ValueError, TypeError):
@@ -189,8 +183,8 @@ for i in range(2, ws2.max_row + 1):
     else:
         project_name = str(y_val)
 
-    qty = safe_float(ag_val) if ag_val else 0
-    maoli = (safe_float(ak_val) if ak_val else 0) - (safe_float(aw_val) if aw_val else 0)
+    qty = float(ag_val) if ag_val else 0
+    maoli = (float(ak_val) if ak_val else 0) - (float(aw_val) if aw_val else 0)
 
     if a_val == current_period:
         project_stats[project_name]['current_qty'] += qty
@@ -244,8 +238,8 @@ for i in range(2, ws2.max_row + 1):
     if not ad_val or str(af_val) != "混合维修":
         continue
 
-    qty = safe_float(ag_val) if ag_val else 0
-    maoli = (safe_float(ak_val) if ak_val else 0) - (safe_float(aw_val) if aw_val else 0)
+    qty = float(ag_val) if ag_val else 0
+    maoli = (float(ak_val) if ak_val else 0) - (float(aw_val) if aw_val else 0)
 
     if a_val == current_period:
         hunhe_product_stats[ad_val]['current_qty'] += qty
@@ -285,8 +279,8 @@ for i in range(2, ws2.max_row + 1):
     if not y_val or str(af_val) != "保修-质保":
         continue
 
-    qty = safe_float(ag_val) if ag_val else 0
-    maoli = safe_float(an_val) if an_val else 0
+    qty = float(ag_val) if ag_val else 0
+    maoli = float(an_val) if an_val else 0
 
     if a_val == current_period:
         baozheng_zhbao_stats[y_val]['current_qty'] += qty
@@ -323,8 +317,8 @@ for i in range(2, ws2.max_row + 1):
     if not y_val or str(af_val) != "保修-技术升级":
         continue
 
-    qty = safe_float(ag_val) if ag_val else 0
-    maoli = safe_float(an_val) if an_val else 0
+    qty = float(ag_val) if ag_val else 0
+    maoli = float(an_val) if an_val else 0
 
     if a_val == current_period:
         jishu_shengji_stats[y_val]['current_qty'] += qty
@@ -361,8 +355,8 @@ for i in range(2, ws2.max_row + 1):
     if not y_val or str(af_val) != "保修-终身质保":
         continue
 
-    qty = safe_float(ag_val) if ag_val else 0
-    maoli = safe_float(an_val) if an_val else 0
+    qty = float(ag_val) if ag_val else 0
+    maoli = float(an_val) if an_val else 0
 
     if a_val == current_period:
         zhongshen_zhbao_stats[y_val]['current_qty'] += qty
@@ -399,8 +393,8 @@ for i in range(2, ws2.max_row + 1):
     if not y_val or str(af_val) != "服务产品":
         continue
 
-    qty = safe_float(ag_val) if ag_val else 0
-    maoli = safe_float(an_val) if an_val else 0
+    qty = float(ag_val) if ag_val else 0
+    maoli = float(an_val) if an_val else 0
 
     if a_val == current_period:
         fuwu_chanpin_stats[y_val]['current_qty'] += qty
@@ -437,8 +431,8 @@ for i in range(2, ws2.max_row + 1):
     if not ad_val or str(af_val) != "商城安装":
         continue
 
-    qty = safe_float(ag_val) if ag_val else 0
-    maoli = safe_float(an_val) if an_val else 0
+    qty = float(ag_val) if ag_val else 0
+    maoli = float(an_val) if an_val else 0
 
     if a_val == current_period:
         shangcheng_anzhuang_stats[ad_val]['current_qty'] += qty
@@ -474,7 +468,7 @@ for i, row in enumerate(ws.iter_rows(min_col=31, max_col=33, values_only=True), 
     # 如果类别和数值都有，就添加
     if row[0] is not None and row[1] is not None:
         categories.append(str(row[0]))
-        values.append(safe_float(row[1]))
+        values.append(float(row[1]))
         labels.append(str(row[2]) if row[2] is not None else '')
     # 如果遇到空行就停止
     elif row[0] is None and row[1] is None and row[2] is None:
