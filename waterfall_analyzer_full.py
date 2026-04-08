@@ -623,12 +623,10 @@ html_content = f"""<!DOCTYPE html>
         }}
         .top10-item .data-table th {{
             white-space: nowrap;
-            font-size: 11px;
             padding: 8px 3px;
         }}
         .top10-item .data-table td {{
             white-space: nowrap;
-            font-size: 11px;
             padding: 6px 3px;
         }}
         .top10-item .data-table td:nth-child(2) {{
@@ -636,10 +634,10 @@ html_content = f"""<!DOCTYPE html>
             word-break: break-word;
         }}
         .top10-item .data-table th:first-child {{
-            width: 28px;
+            width: 25px;
         }}
         .top10-item .data-table th:nth-child(2) {{
-            width: 15%;
+            width: 9%;
         }}
         @media (max-width: 700px) {{
             .top10-grid {{
