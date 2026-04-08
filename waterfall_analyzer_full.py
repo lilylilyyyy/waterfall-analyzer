@@ -611,7 +611,6 @@ html_content = f"""<!DOCTYPE html>
             min-width: 0;
             display: flex;
             flex-direction: column;
-            overflow-x: auto;
         }}
         .top10-item .data-table {{
             flex: 1;
@@ -624,19 +623,23 @@ html_content = f"""<!DOCTYPE html>
         }}
         .top10-item .data-table th {{
             white-space: nowrap;
+            font-size: 11px;
+            padding: 8px 3px;
         }}
         .top10-item .data-table td {{
             white-space: nowrap;
+            font-size: 11px;
+            padding: 6px 3px;
         }}
         .top10-item .data-table td:nth-child(2) {{
             white-space: normal;
             word-break: break-word;
         }}
         .top10-item .data-table th:first-child {{
-            width: 30px;
+            width: 28px;
         }}
         .top10-item .data-table th:nth-child(2) {{
-            width: 18%;
+            width: 15%;
         }}
         @media (max-width: 700px) {{
             .top10-grid {{
