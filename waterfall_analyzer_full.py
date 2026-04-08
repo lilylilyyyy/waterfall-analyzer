@@ -618,7 +618,6 @@ html_content = f"""<!DOCTYPE html>
             height: 100%;
             table-layout: fixed;
             width: 100%;
-            word-break: break-word;
         }}
         .top10-item .data-table tbody {{
             min-height: 400px;
@@ -626,10 +625,16 @@ html_content = f"""<!DOCTYPE html>
         .top10-item .data-table th {{
             font-size: 12px;
             padding: 8px 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }}
         .top10-item .data-table td {{
             font-size: 11px;
             padding: 6px 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }}
         .top10-item .data-table th:first-child {{
             width: 30px;
