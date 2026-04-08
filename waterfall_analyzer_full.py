@@ -132,329 +132,201 @@ for row in range(45, 138):  # 45到137行
             # 跳过无法转换的值
             continue
 
-# 读取高频高毛利TOP20项目数据
+import openpyxl
+import json
+import os
 from collections import defaultdict
 
+# ================== 读取配置 ==================
+config_path = os.path.join(os.path.dirname(__file__), 'config.json')
+with open(config_path, 'r', encoding='utf-8') as f:
+    config = json.load(f)
+
+# ================== 读取明细表 ==================
 wb2 = openpyxl.load_workbook(config['detail_excel_path'], data_only=True)
 ws2 = wb2.active
 
-# 统计所有账期
+# ================== 🔥 构建字段映射（核心升级） ==================
+header_map = {}
+for col in range(1, ws2.max_column + 1):
+    header = ws2.cell(row=1, column=col).value
+    if header:
+        header_map[str(header).strip()] = col
+
+def get_val(row, field):
+    """安全取值"""
+    col = header_map.get(field)
+    if not col:
+        return None
+    return ws2.cell(row=row, column=col).value
+
+# ================== 账期识别 ==================
 period_set = set()
 for i in range(2, ws2.max_row + 1):
-    a_val = ws2.cell(row=i, column=1).value
-    if a_val:
-        period_set.add(str(a_val))
+    val = get_val(i, "账期月份")
+    if val:
+        period_set.add(str(val))
 
-# 按账期排序，取最新的两个
 periods = sorted(list(period_set), reverse=True)
-current_period = periods[0] if len(periods) > 0 else ""
+current_period = periods[0] if periods else ""
 last_period = periods[1] if len(periods) > 1 else ""
 
-# 第一步：收集所有"轮胎"相关的维修项目编码
+# ================== 🔥 轮胎项目识别 ==================
 tire_project_codes = set()
+
 for i in range(2, ws2.max_row + 1):
-    ae_val = ws2.cell(row=i, column=31).value  # AE列 - 商品类型名称
-    ad_val = ws2.cell(row=i, column=30).value  # AD列 - 商品名称
-    x_val = ws2.cell(row=i, column=24).value   # X列 - 维修项目编码
+    if get_val(i, "商品类型名称") == "零件" and get_val(i, "商品名称") == "轮胎":
+        code = get_val(i, "维修项目编码")
+        if code:
+            tire_project_codes.add(str(code))
 
-    # 如果商品类型=零件 且 商品名称=轮胎，记录维修项目编码
-    if str(ae_val) == "零件" and str(ad_val) == "轮胎" and x_val:
-        tire_project_codes.add(str(x_val))
-
-# 按项目统计
+# ================== 维保TOP20 ==================
 project_stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
 
 for i in range(2, ws2.max_row + 1):
-    a_val = str(ws2.cell(row=i, column=1).value) if ws2.cell(row=i, column=1).value else ""
-    x_val = ws2.cell(row=i, column=24).value  # X列 - 维修项目编码
-    y_val = ws2.cell(row=i, column=25).value  # Y列 - 项目名称
-    af_val = ws2.cell(row=i, column=32).value  # AF列 - 收入类型
-    ag_val = ws2.cell(row=i, column=33).value  # AG列 - 商品数量
-    ak_val = ws2.cell(row=i, column=37).value  # AK列 - 实收
-    aw_val = ws2.cell(row=i, column=49).value  # AW列 - 主机厂零件实收
+    period = str(get_val(i, "账期月份") or "")
+    project_name_raw = get_val(i, "维修项目名称")
+    project_code = get_val(i, "维修项目编码")
+    income_type = get_val(i, "收入类型")
 
-    # 过滤条件：项目名称存在 且 收入类型不等于"混合维修"
-    if not y_val or str(af_val) == "混合维修":
+    if not project_name_raw or income_type == "混合维修":
         continue
 
-    # 特殊处理：如果维修项目编码在轮胎项目编码集合中，统一使用"轮胎"作为项目名称
-    if x_val and str(x_val) in tire_project_codes:
+    # 轮胎归类
+    if project_code and str(project_code) in tire_project_codes:
         project_name = "轮胎"
     else:
-        project_name = str(y_val)
+        project_name = str(project_name_raw)
 
-    qty = float(ag_val) if ag_val else 0
-    maoli = (float(ak_val) if ak_val else 0) - (float(aw_val) if aw_val else 0)
+    qty = float(get_val(i, "商品数量") or 0)
+    revenue = float(get_val(i, "实收") or 0)
+    cost = float(get_val(i, "主机厂零件实收") or 0)
+    maoli = revenue - cost
 
-    if a_val == current_period:
+    if period == current_period:
         project_stats[project_name]['current_qty'] += qty
         project_stats[project_name]['current_maoli'] += maoli
-    elif a_val == last_period:
+    elif period == last_period:
         project_stats[project_name]['last_qty'] += qty
         project_stats[project_name]['last_maoli'] += maoli
 
-# 计算总毛利并排序，取TOP20
+# 排序
 top20_projects = []
-tire_project = None  # 保存轮胎项目
+tire_project = None
 
-for project, stats in project_stats.items():
-    total_maoli = stats['current_maoli'] + stats['last_maoli']
-    if abs(total_maoli) > 0.01:  # 只看有毛利的项目
-        project_data = {
-            'name': project,
-            'current_qty': stats['current_qty'],
-            'last_qty': stats['last_qty'],
-            'current_maoli': stats['current_maoli'],
-            'last_maoli': stats['last_maoli'],
-            'total_maoli': total_maoli
+for name, s in project_stats.items():
+    total = s['current_maoli'] + s['last_maoli']
+    if abs(total) > 0.01:
+        data = {
+            'name': name,
+            'current_qty': s['current_qty'],
+            'last_qty': s['last_qty'],
+            'current_maoli': s['current_maoli'],
+            'last_maoli': s['last_maoli'],
+            'total_maoli': total
         }
-        top20_projects.append(project_data)
+        top20_projects.append(data)
 
-        # 如果是轮胎项目，单独保存
-        if project == "轮胎":
-            tire_project = project_data
+        if name == "轮胎":
+            tire_project = data
 
 top20_projects.sort(key=lambda x: x['total_maoli'], reverse=True)
-top20_projects = top20_projects[:20]  # 取TOP20
+top20_projects = top20_projects[:20]
 
-# 强制确保轮胎项目在榜单中
 if tire_project and tire_project not in top20_projects:
-    # 如果轮胎不在TOP20中，强制加入
     top20_projects.append(tire_project)
-    print(f"注意：轮胎项目（毛利: {tire_project['total_maoli']:.2f}）强制加入榜单")
 
-# 统计混合维修的TOP20项目（按商品名称）
-hunhe_product_stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
+# ================== 混合维修TOP20 ==================
+hunhe_stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
 
 for i in range(2, ws2.max_row + 1):
-    a_val = str(ws2.cell(row=i, column=1).value) if ws2.cell(row=i, column=1).value else ""
-    ad_val = ws2.cell(row=i, column=30).value  # AD列 - 商品名称
-    af_val = ws2.cell(row=i, column=32).value  # AF列 - 收入类型
-    ag_val = ws2.cell(row=i, column=33).value  # AG列 - 商品数量
-    ak_val = ws2.cell(row=i, column=37).value  # AK列 - 实收
-    aw_val = ws2.cell(row=i, column=49).value  # AW列 - 主机厂零件实收
-
-    # 过滤条件：商品名称存在 且 收入类型等于"混合维修"
-    if not ad_val or str(af_val) != "混合维修":
+    if get_val(i, "收入类型") != "混合维修":
         continue
 
-    qty = float(ag_val) if ag_val else 0
-    maoli = (float(ak_val) if ak_val else 0) - (float(aw_val) if aw_val else 0)
+    name = get_val(i, "商品名称")
+    if not name:
+        continue
 
-    if a_val == current_period:
-        hunhe_product_stats[ad_val]['current_qty'] += qty
-        hunhe_product_stats[ad_val]['current_maoli'] += maoli
-    elif a_val == last_period:
-        hunhe_product_stats[ad_val]['last_qty'] += qty
-        hunhe_product_stats[ad_val]['last_maoli'] += maoli
+    period = str(get_val(i, "账期月份") or "")
+    qty = float(get_val(i, "商品数量") or 0)
+    revenue = float(get_val(i, "实收") or 0)
+    cost = float(get_val(i, "主机厂零件实收") or 0)
+    maoli = revenue - cost
 
-# 计算总毛利并排序，取TOP20
-top20_hunhe_products = []
-for product, stats in hunhe_product_stats.items():
-    total_maoli = stats['current_maoli'] + stats['last_maoli']
-    if abs(total_maoli) > 0.01:
-        top20_hunhe_products.append({
-            'name': product,
-            'current_qty': stats['current_qty'],
-            'last_qty': stats['last_qty'],
-            'current_maoli': stats['current_maoli'],
-            'last_maoli': stats['last_maoli'],
-            'total_maoli': total_maoli
+    if period == current_period:
+        hunhe_stats[name]['current_qty'] += qty
+        hunhe_stats[name]['current_maoli'] += maoli
+    elif period == last_period:
+        hunhe_stats[name]['last_qty'] += qty
+        hunhe_stats[name]['last_maoli'] += maoli
+
+top20_hunhe = []
+for k, v in hunhe_stats.items():
+    total = v['current_maoli'] + v['last_maoli']
+    if abs(total) > 0.01:
+        top20_hunhe.append({
+            'name': k,
+            **v,
+            'total_maoli': total
         })
 
-top20_hunhe_products.sort(key=lambda x: x['total_maoli'], reverse=True)
-top20_hunhe_products = top20_hunhe_products[:20]  # 取TOP20
+top20_hunhe.sort(key=lambda x: x['total_maoli'], reverse=True)
+top20_hunhe = top20_hunhe[:20]
 
-# 统计内部维修的TOP10项目（按收入类型分类）
-# 4.2.1 保修-质保TOP10
-baozheng_zhbao_stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
+# ================== 内部结算（示例：质保） ==================
+def build_internal_top10(type_name):
+    stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
 
-for i in range(2, ws2.max_row + 1):
-    a_val = str(ws2.cell(row=i, column=1).value) if ws2.cell(row=i, column=1).value else ""
-    y_val = ws2.cell(row=i, column=25).value  # Y列 - 项目名称
-    af_val = ws2.cell(row=i, column=32).value  # AF列 - 收入类型
-    ag_val = ws2.cell(row=i, column=33).value  # AG列 - 商品数量
-    an_val = ws2.cell(row=i, column=40).value  # AN列 - 内部结算收入
+    for i in range(2, ws2.max_row + 1):
+        if get_val(i, "收入类型") != type_name:
+            continue
 
-    if not y_val or str(af_val) != "保修-质保":
-        continue
+        name = get_val(i, "维修项目名称")
+        if not name:
+            continue
 
-    qty = float(ag_val) if ag_val else 0
-    maoli = float(an_val) if an_val else 0
+        period = str(get_val(i, "账期月份") or "")
+        qty = float(get_val(i, "商品数量") or 0)
+        maoli = float(get_val(i, "内部结算收入") or 0)
 
-    if a_val == current_period:
-        baozheng_zhbao_stats[y_val]['current_qty'] += qty
-        baozheng_zhbao_stats[y_val]['current_maoli'] += maoli
-    elif a_val == last_period:
-        baozheng_zhbao_stats[y_val]['last_qty'] += qty
-        baozheng_zhbao_stats[y_val]['last_maoli'] += maoli
+        if period == current_period:
+            stats[name]['current_qty'] += qty
+            stats[name]['current_maoli'] += maoli
+        elif period == last_period:
+            stats[name]['last_qty'] += qty
+            stats[name]['last_maoli'] += maoli
 
-top10_baozheng_zhbao = []
-for project, stats in baozheng_zhbao_stats.items():
-    total_maoli = stats['current_maoli'] + stats['last_maoli']
-    if abs(total_maoli) > 0.01:
-        top10_baozheng_zhbao.append({
-            'name': project,
-            'current_qty': stats['current_qty'],
-            'last_qty': stats['last_qty'],
-            'current_maoli': stats['current_maoli'],
-            'last_maoli': stats['last_maoli'],
-            'total_maoli': total_maoli
-        })
-top10_baozheng_zhbao.sort(key=lambda x: x['total_maoli'], reverse=True)
-top10_baozheng_zhbao = top10_baozheng_zhbao[:10]
+    result = []
+    for k, v in stats.items():
+        total = v['current_maoli'] + v['last_maoli']
+        if abs(total) > 0.01:
+            result.append({
+                'name': k,
+                **v,
+                'total_maoli': total
+            })
 
-# 4.2.2 保修-技术升级TOP10
-jishu_shengji_stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
+    result.sort(key=lambda x: x['total_maoli'], reverse=True)
+    return result[:10]
 
-for i in range(2, ws2.max_row + 1):
-    a_val = str(ws2.cell(row=i, column=1).value) if ws2.cell(row=i, column=1).value else ""
-    y_val = ws2.cell(row=i, column=25).value
-    af_val = ws2.cell(row=i, column=32).value
-    ag_val = ws2.cell(row=i, column=33).value
-    an_val = ws2.cell(row=i, column=40).value  # AN列 - 内部结算收入
+top10_zhbao = build_internal_top10("保修-质保")
+top10_jishu = build_internal_top10("保修-技术升级")
+top10_zhongshen = build_internal_top10("保修-终身质保")
+top10_fuwu = build_internal_top10("服务产品")
 
-    if not y_val or str(af_val) != "保修-技术升级":
-        continue
-
-    qty = float(ag_val) if ag_val else 0
-    maoli = float(an_val) if an_val else 0
-
-    if a_val == current_period:
-        jishu_shengji_stats[y_val]['current_qty'] += qty
-        jishu_shengji_stats[y_val]['current_maoli'] += maoli
-    elif a_val == last_period:
-        jishu_shengji_stats[y_val]['last_qty'] += qty
-        jishu_shengji_stats[y_val]['last_maoli'] += maoli
-
-top10_jishu_shengji = []
-for project, stats in jishu_shengji_stats.items():
-    total_maoli = stats['current_maoli'] + stats['last_maoli']
-    if abs(total_maoli) > 0.01:
-        top10_jishu_shengji.append({
-            'name': project,
-            'current_qty': stats['current_qty'],
-            'last_qty': stats['last_qty'],
-            'current_maoli': stats['current_maoli'],
-            'last_maoli': stats['last_maoli'],
-            'total_maoli': total_maoli
-        })
-top10_jishu_shengji.sort(key=lambda x: x['total_maoli'], reverse=True)
-top10_jishu_shengji = top10_jishu_shengji[:10]
-
-# 4.2.3 保修-终身质保TOP10
-zhongshen_zhbao_stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
-
-for i in range(2, ws2.max_row + 1):
-    a_val = str(ws2.cell(row=i, column=1).value) if ws2.cell(row=i, column=1).value else ""
-    y_val = ws2.cell(row=i, column=25).value
-    af_val = ws2.cell(row=i, column=32).value
-    ag_val = ws2.cell(row=i, column=33).value
-    an_val = ws2.cell(row=i, column=40).value  # AN列 - 内部结算收入
-
-    if not y_val or str(af_val) != "保修-终身质保":
-        continue
-
-    qty = float(ag_val) if ag_val else 0
-    maoli = float(an_val) if an_val else 0
-
-    if a_val == current_period:
-        zhongshen_zhbao_stats[y_val]['current_qty'] += qty
-        zhongshen_zhbao_stats[y_val]['current_maoli'] += maoli
-    elif a_val == last_period:
-        zhongshen_zhbao_stats[y_val]['last_qty'] += qty
-        zhongshen_zhbao_stats[y_val]['last_maoli'] += maoli
-
-top10_zhongshen_zhbao = []
-for project, stats in zhongshen_zhbao_stats.items():
-    total_maoli = stats['current_maoli'] + stats['last_maoli']
-    if abs(total_maoli) > 0.01:
-        top10_zhongshen_zhbao.append({
-            'name': project,
-            'current_qty': stats['current_qty'],
-            'last_qty': stats['last_qty'],
-            'current_maoli': stats['current_maoli'],
-            'last_maoli': stats['last_maoli'],
-            'total_maoli': total_maoli
-        })
-top10_zhongshen_zhbao.sort(key=lambda x: x['total_maoli'], reverse=True)
-top10_zhongshen_zhbao = top10_zhongshen_zhbao[:10]
-
-# 4.2.4 服务产品TOP10
-fuwu_chanpin_stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
-
-for i in range(2, ws2.max_row + 1):
-    a_val = str(ws2.cell(row=i, column=1).value) if ws2.cell(row=i, column=1).value else ""
-    y_val = ws2.cell(row=i, column=25).value
-    af_val = ws2.cell(row=i, column=32).value
-    ag_val = ws2.cell(row=i, column=33).value
-    an_val = ws2.cell(row=i, column=40).value  # AN列 - 内部结算收入
-
-    if not y_val or str(af_val) != "服务产品":
-        continue
-
-    qty = float(ag_val) if ag_val else 0
-    maoli = float(an_val) if an_val else 0
-
-    if a_val == current_period:
-        fuwu_chanpin_stats[y_val]['current_qty'] += qty
-        fuwu_chanpin_stats[y_val]['current_maoli'] += maoli
-    elif a_val == last_period:
-        fuwu_chanpin_stats[y_val]['last_qty'] += qty
-        fuwu_chanpin_stats[y_val]['last_maoli'] += maoli
-
-top10_fuwu_chanpin = []
-for project, stats in fuwu_chanpin_stats.items():
-    total_maoli = stats['current_maoli'] + stats['last_maoli']
-    if abs(total_maoli) > 0.01:
-        top10_fuwu_chanpin.append({
-            'name': project,
-            'current_qty': stats['current_qty'],
-            'last_qty': stats['last_qty'],
-            'current_maoli': stats['current_maoli'],
-            'last_maoli': stats['last_maoli'],
-            'total_maoli': total_maoli
-        })
-top10_fuwu_chanpin.sort(key=lambda x: x['total_maoli'], reverse=True)
-top10_fuwu_chanpin = top10_fuwu_chanpin[:10]
-
-# 4.2.5 商城安装TOP10（按商品名称AD列）
-shangcheng_anzhuang_stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
-
-for i in range(2, ws2.max_row + 1):
-    a_val = str(ws2.cell(row=i, column=1).value) if ws2.cell(row=i, column=1).value else ""
-    ad_val = ws2.cell(row=i, column=30).value  # AD列 - 商品名称
-    af_val = ws2.cell(row=i, column=32).value
-    ag_val = ws2.cell(row=i, column=33).value
-    an_val = ws2.cell(row=i, column=40).value  # AN列 - 内部结算收入
-
-    if not ad_val or str(af_val) != "商城安装":
-        continue
-
-    qty = float(ag_val) if ag_val else 0
-    maoli = float(an_val) if an_val else 0
-
-    if a_val == current_period:
-        shangcheng_anzhuang_stats[ad_val]['current_qty'] += qty
-        shangcheng_anzhuang_stats[ad_val]['current_maoli'] += maoli
-    elif a_val == last_period:
-        shangcheng_anzhuang_stats[ad_val]['last_qty'] += qty
-        shangcheng_anzhuang_stats[ad_val]['last_maoli'] += maoli
-
+# ================== 输出验证 ==================
+print("✅ 数据读取完成")
+print(f"当前账期: {current_period}")
+print(f"上期账期: {last_period}")
+print(f"维保TOP20数量: {len(top20_projects)}")
+print(f"混合维修TOP20数量: {len(top20_hunhe)}")
+print(f"质保TOP10数量: {len(top10_zhbao)}")
+top20_hunhe_products = top20_hunhe
+top10_baozheng_zhbao = top10_zhbao
+top10_jishu_shengji = top10_jishu
+top10_zhongshen_zhbao = top10_zhongshen
+top10_fuwu_chanpin = top10_fuwu
 top10_shangcheng_anzhuang = []
-for product, stats in shangcheng_anzhuang_stats.items():
-    total_maoli = stats['current_maoli'] + stats['last_maoli']
-    if abs(total_maoli) > 0.01:
-        top10_shangcheng_anzhuang.append({
-            'name': product,
-            'current_qty': stats['current_qty'],
-            'last_qty': stats['last_qty'],
-            'current_maoli': stats['current_maoli'],
-            'last_maoli': stats['last_maoli'],
-            'total_maoli': total_maoli
-        })
-top10_shangcheng_anzhuang.sort(key=lambda x: x['total_maoli'], reverse=True)
-top10_shangcheng_anzhuang = top10_shangcheng_anzhuang[:10]
 
 # 读取 AE:AG 列的数据（从第8行开始）
 categories = []
