@@ -637,7 +637,7 @@ html_content = f"""<!DOCTYPE html>
         .top10-item .data-table th:nth-child(2) {{
             width: 18%;
         }}
-        @media (max-width: 1200px) {{
+        @media (max-width: 700px) {{
             .top10-grid {{
                 grid-template-columns: 1fr;
             }}
