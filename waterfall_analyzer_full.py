@@ -623,18 +623,10 @@ html_content = f"""<!DOCTYPE html>
             min-height: 400px;
         }}
         .top10-item .data-table th {{
-            font-size: 12px;
-            padding: 8px 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            word-break: break-word;
         }}
         .top10-item .data-table td {{
-            font-size: 11px;
-            padding: 6px 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            word-break: break-word;
         }}
         .top10-item .data-table th:first-child {{
             width: 30px;
