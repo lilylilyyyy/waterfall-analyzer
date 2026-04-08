@@ -623,9 +623,13 @@ html_content = f"""<!DOCTYPE html>
             min-height: 400px;
         }}
         .top10-item .data-table th {{
-            word-break: break-word;
+            white-space: nowrap;
         }}
         .top10-item .data-table td {{
+            white-space: nowrap;
+        }}
+        .top10-item .data-table td:nth-child(2) {{
+            white-space: normal;
             word-break: break-word;
         }}
         .top10-item .data-table th:first-child {{
