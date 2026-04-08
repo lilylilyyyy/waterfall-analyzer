@@ -313,7 +313,7 @@ top10_zhbao = build_internal_top10("保修-质保")
 top10_jishu = build_internal_top10("保修-技术升级")
 top10_zhongshen = build_internal_top10("保修-终身质保")
 top10_fuwu = build_internal_top10("服务产品")
-
+top10_shangcheng = build_internal_top10("商城安装")
 # ================== 输出验证 ==================
 print("✅ 数据读取完成")
 print(f"当前账期: {current_period}")
@@ -326,7 +326,7 @@ top10_baozheng_zhbao = top10_zhbao
 top10_jishu_shengji = top10_jishu
 top10_zhongshen_zhbao = top10_zhongshen
 top10_fuwu_chanpin = top10_fuwu
-top10_shangcheng_anzhuang = []
+top10_shangcheng_anzhuang = top10_shangcheng
 
 # 读取 AE:AG 列的数据（从第8行开始）
 categories = []
