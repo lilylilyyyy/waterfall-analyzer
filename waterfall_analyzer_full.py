@@ -634,10 +634,10 @@ html_content = f"""<!DOCTYPE html>
             word-break: break-word;
         }}
         .top10-item .data-table th:first-child {{
-            width: 25px;
+            width: 25px !important;
         }}
         .top10-item .data-table th:nth-child(2) {{
-            width: 9%;
+            width: 9% !important;
         }}
         @media (max-width: 700px) {{
             .top10-grid {{
