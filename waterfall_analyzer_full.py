@@ -614,6 +614,14 @@ html_content = f"""<!DOCTYPE html>
             display: flex;
             flex-direction: column;
         }}
+        .top10-item {{
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;   /* ✅ 防止溢出 */
+            overflow: hidden;  /* ✅ 关键 */
+            display: flex;
+            flex-direction: column;
+        }}
         .top10-item .data-table {{
             flex: 1;
             height: 100%;
