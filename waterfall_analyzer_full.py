@@ -281,13 +281,25 @@ def build_internal_top10(type_name):
         if get_val(i, "收入类型") != type_name:
             continue
 
-        name = get_val(i, "维修项目名称")
+        # 🔥 核心改动：按类型选字段
+        if type_name in ["混合维修", "商城安装"]:
+            name = get_val(i, "商品名称")
+        else:
+            name = get_val(i, "维修项目名称")
+
         if not name:
             continue
 
         period = str(get_val(i, "账期月份") or "")
         qty = float(get_val(i, "商品数量") or 0)
-        maoli = float(get_val(i, "内部结算收入") or 0)
+
+        # 🔥 内部结算 vs 普通毛利
+        if type_name in ["保修-质保", "保修-技术升级", "保修-终身质保", "服务产品", "商城安装"]:
+            maoli = float(get_val(i, "内部结算收入") or 0)
+        else:
+            revenue = float(get_val(i, "实收") or 0)
+            cost = float(get_val(i, "主机厂零件实收") or 0)
+            maoli = revenue - cost
 
         if period == current_period:
             stats[name]['current_qty'] += qty
