@@ -92,7 +92,7 @@ for row in range(37, 45):  # 37到44行
 # 读取门店运营成本分析数据 (C45:C137, U45:U137, V45:V137)
 mendian_data = []
 
-for row in range(45, 138):  # 45到137行
+for row in range(45, 139):  # 45到138行
     cat = ws[f'C{row}'].value
     last = ws[f'U{row}'].value  # U列是上月
     current = ws[f'V{row}'].value  # V列是当月
