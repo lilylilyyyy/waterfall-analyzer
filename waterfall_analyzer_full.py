@@ -603,22 +603,12 @@ html_content = f"""<!DOCTYPE html>
         }}
         .top10-grid {{
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));  /* ✅ 防止挤压变形 */
+            grid-template-columns: 1fr 1fr;
             gap: 20px;
             margin-top: 20px;
         }}
-        
         .top10-item {{
-            width: 100%;              /* ✅ 关键：撑满列 */
             min-width: 0;
-            display: flex;
-            flex-direction: column;
-        }}
-        .top10-item {{
-            width: 100%;
-            min-width: 0;
-            max-width: 100%;   /* ✅ 防止溢出 */
-            overflow: hidden;  /* ✅ 关键 */
             display: flex;
             flex-direction: column;
         }}
@@ -628,6 +618,11 @@ html_content = f"""<!DOCTYPE html>
         }}
         .top10-item .data-table tbody {{
             min-height: 400px;
+        }}
+        @media (max-width: 1200px) {{
+            .top10-grid {{
+                grid-template-columns: 1fr;
+            }}
         }}
         .mendian-table tr[style*='background: #EFEFEF'] {{
             font-weight: bold;
