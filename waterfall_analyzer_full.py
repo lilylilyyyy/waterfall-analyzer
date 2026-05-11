@@ -89,10 +89,10 @@ for row in range(37, 45):  # 37到44行
         neibu_current.append(float(current) if current is not None else 0)
         neibu_last.append(float(last) if last is not None else 0)
 
-# 读取门店运营成本分析数据 (C45:C137, U45:U137, V45:V137)
+# 读取门店运营成本分析数据 (C45:C139, U45:U139, V45:V139)
 mendian_data = []
 
-for row in range(45, 139):  # 45到138行
+for row in range(45, 141):  # 45到138行
     cat = ws[f'C{row}'].value
     last = ws[f'U{row}'].value  # U列是上月
     current = ws[f'V{row}'].value  # V列是当月
