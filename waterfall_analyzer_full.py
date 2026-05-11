@@ -112,7 +112,7 @@ for row in range(45, 141):  # 45到138行
     level = 0
     if not cat and is_bold:  # 汇总行（无类别名称但加粗）
         level = 0
-        cat = "合计"
+        cat = "阵地＋客户体验投入合计"
     elif is_bold and fill_color == 'FFDEE0E3':  # 一级分类（加粗+灰色）
         level = 1
     elif fill_color == 'FFFAF1D1':  # 二级分类（浅黄色）
