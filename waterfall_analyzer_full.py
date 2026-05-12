@@ -143,6 +143,7 @@ with open(config_path, 'r', encoding='utf-8') as f:
     config = json.load(f)
 
 # ================== 读取明细表 ==================
+import time
 start_time = time.time()
 wb2 = openpyxl.load_workbook(
     config['detail_excel_path'],
@@ -365,7 +366,6 @@ top10_shangcheng = build_top10(internal_stats["商城安装"])
 # ================== 输出验证 ==================
 print("✅ 数据读取完成")
 end_time = time.time()
-import time
 
 
 
@@ -805,7 +805,8 @@ html_parts.append(f"""<!DOCTYPE html>
                     <th>变化率</th>
                 </tr>
             </thead>
-            <tbody>"""
+            <tbody>
+            """
 
 # 生成表格行
 for i, cat in enumerate(taici_categories):
@@ -850,7 +851,8 @@ html_parts.append(f"""
                     <th>变化率</th>
                 </tr>
             </thead>
-            <tbody>"""
+            <tbody>
+            """
 
 # 生成TOP20项目表格行
 for rank, proj in enumerate(top20_projects, 1):
@@ -893,7 +895,8 @@ html_parts.append(f"""
                     <th>变化率</th>
                 </tr>
             </thead>
-            <tbody>"""
+            <tbody>
+            """
 
 # 生成混合维修表格行
 for i, cat in enumerate(hunhe_categories):
@@ -938,7 +941,8 @@ html_parts.append(f"""
                     <th>变化率</th>
                 </tr>
             </thead>
-            <tbody>"""
+            <tbody>
+            """
 
 # 生成混合维修TOP20商品表格行
 for rank, prod in enumerate(top20_hunhe_products, 1):
@@ -981,7 +985,8 @@ html_parts.append(f"""
                     <th>变化率</th>
                 </tr>
             </thead>
-            <tbody>"""
+            <tbody>
+            """
 
 # 生成内部维修表格行
 for i, cat in enumerate(neibu_categories):
@@ -1024,7 +1029,8 @@ html_parts.append(f"""
                     <th>变化率</th>
                 </tr>
             </thead>
-            <tbody>"""
+            <tbody>
+            """
 
 # 生成保修-质保TOP10表格行
 for rank in range(1, 11):  # 固定显示10行
@@ -1089,7 +1095,8 @@ html_parts.append(f"""
                     <th>变化率</th>
                 </tr>
             </thead>
-            <tbody>"""
+            <tbody>
+            """
 
 # 生成保修-技术升级TOP10表格行
 for rank in range(1, 11):  # 固定显示10行
@@ -1154,7 +1161,8 @@ html_parts.append(f"""
                     <th>变化率</th>
                 </tr>
             </thead>
-            <tbody>"""
+            <tbody>
+            """
 
 # 生成保修-终身质保TOP10表格行
 for rank in range(1, 11):  # 固定显示10行
@@ -1219,7 +1227,8 @@ html_parts.append(f"""
                     <th>变化率</th>
                 </tr>
             </thead>
-            <tbody>"""
+            <tbody>
+            """
 
 # 生成服务产品TOP10表格行
 for rank in range(1, 11):  # 固定显示10行
@@ -1284,7 +1293,8 @@ html_parts.append(f"""
                     <th>变化率</th>
                 </tr>
             </thead>
-            <tbody>"""
+            <tbody>
+            """
 
 # 生成商城安装TOP10表格行
 for rank in range(1, 11):  # 固定显示10行
@@ -1450,7 +1460,8 @@ html_parts.append(f"""
                     <th style="width: 120px;">变化率</th>
                 </tr>
             </thead>
-            <tbody>"""
+            <tbody>
+            """
 
 # 生成门店运营成本表格行
 for item in mendian_data[:50]:
