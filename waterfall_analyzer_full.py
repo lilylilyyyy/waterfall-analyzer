@@ -143,6 +143,7 @@ with open(config_path, 'r', encoding='utf-8') as f:
     config = json.load(f)
 
 # ================== 读取明细表 ==================
+start_time = time.time()
 wb2 = openpyxl.load_workbook(
     config['detail_excel_path'],
     data_only=True,
@@ -151,9 +152,11 @@ wb2 = openpyxl.load_workbook(
 ws2 = wb2.active
 
 # ================== 🔥 内存数据读取（性能优化） ==================
-rows_data = list(ws2.iter_rows(values_only=True))
+all_rows = list(ws2.iter_rows(values_only=True))
+headers = all_rows[0]
+data_rows = all_rows[1:]
 
-headers = rows_data[0]
+
 
 header_map = {
     str(v).strip(): idx
@@ -169,7 +172,7 @@ def get_val(row, field):
 
 # ================== 账期识别 ==================
 period_set = set()
-for row in rows_data[1:]:
+for row in data_rows:
     val = get_val(row, "账期月份")
     if val:
         period_set.add(str(val))
@@ -179,18 +182,24 @@ current_period = periods[0] if periods else ""
 last_period = periods[1] if len(periods) > 1 else ""
 
 # ================== 🔥 轮胎项目识别 ==================
+
+
+
 tire_project_codes = set()
 
-for row in rows_data[1:]:
+for row in data_rows:
     if get_val(row, "商品类型名称") == "零件" and get_val(row, "商品名称") == "轮胎":
         code = get_val(row, "维修项目编码")
         if code:
             tire_project_codes.add(str(code))
 
 # ================== 维保TOP20 ==================
+
+
+
 project_stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
 
-for row in rows_data[1:]:
+for row in data_rows:
     period = str(get_val(row, "账期月份") or "")
     project_name_raw = get_val(row, "维修项目名称")
     project_code = get_val(row, "维修项目编码")
@@ -244,9 +253,12 @@ if tire_project and tire_project not in top20_projects:
     top20_projects.append(tire_project)
 
 # ================== 混合维修TOP20 ==================
+
+
+
 hunhe_stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
 
-for row in rows_data[1:]:
+for row in data_rows:
     if get_val(row, "收入类型") != "混合维修":
         continue
 
@@ -281,43 +293,57 @@ top20_hunhe.sort(key=lambda x: x['total_maoli'], reverse=True)
 top20_hunhe = top20_hunhe[:20]
 
 # ================== 内部结算（示例：质保） ==================
-def build_internal_top10(type_name):
-    stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
+internal_stats = {
+    "保修-质保": defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0}),
+    "保修-技术升级": defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0}),
+    "保修-终身质保": defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0}),
+    "服务产品": defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0}),
+    "商城安装": defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0}),
+}
 
-    for row in rows_data[1:]:
-        if get_val(row, "收入类型") != type_name:
-            continue
+# 重新读取数据
 
-        # 🔥 核心改动：按类型选字段
-        if type_name in ["混合维修", "商城安装"]:
-            name = get_val(row, "商品名称")
-        else:
-            name = get_val(row, "维修项目名称")
 
-        if not name:
-            continue
 
-        period = str(get_val(row, "账期月份") or "")
-        qty = float(get_val(row, "商品数量") or 0)
 
-        # 🔥 内部结算 vs 普通毛利
-        if type_name in ["保修-质保", "保修-技术升级", "保修-终身质保", "服务产品", "商城安装"]:
-            maoli = float(get_val(row, "内部结算收入") or 0)
-        else:
-            revenue = float(get_val(row, "实收") or 0)
-            cost = float(get_val(row, "主机厂零件实收") or 0)
-            maoli = revenue - cost
+for row in data_rows:
 
-        if period == current_period:
-            stats[name]['current_qty'] += qty
-            stats[name]['current_maoli'] += maoli
-        elif period == last_period:
-            stats[name]['last_qty'] += qty
-            stats[name]['last_maoli'] += maoli
+    income_type = get_val(row, "收入类型")
+
+    if income_type not in internal_stats:
+        continue
+
+    if income_type in ["混合维修", "商城安装"]:
+        name = get_val(row, "商品名称")
+    else:
+        name = get_val(row, "维修项目名称")
+
+    if not name:
+        continue
+
+    period = str(get_val(row, "账期月份") or "")
+    qty = float(get_val(row, "商品数量") or 0)
+    maoli = float(get_val(row, "内部结算收入") or 0)
+
+    stats = internal_stats[income_type][name]
+
+    if period == current_period:
+        stats['current_qty'] += qty
+        stats['current_maoli'] += maoli
+
+    elif period == last_period:
+        stats['last_qty'] += qty
+        stats['last_maoli'] += maoli
+
+
+def build_top10(stats_dict):
 
     result = []
-    for k, v in stats.items():
+
+    for k, v in stats_dict.items():
+
         total = v['current_maoli'] + v['last_maoli']
+
         if abs(total) > 0.01:
             result.append({
                 'name': k,
@@ -326,18 +352,22 @@ def build_internal_top10(type_name):
             })
 
     result.sort(key=lambda x: x['total_maoli'], reverse=True)
+
     return result[:10]
 
-top10_zhbao = build_internal_top10("保修-质保")
-top10_jishu = build_internal_top10("保修-技术升级")
-top10_zhongshen = build_internal_top10("保修-终身质保")
-top10_fuwu = build_internal_top10("服务产品")
-top10_shangcheng = build_internal_top10("商城安装")
+
+top10_zhbao = build_top10(internal_stats["保修-质保"])
+top10_jishu = build_top10(internal_stats["保修-技术升级"])
+top10_zhongshen = build_top10(internal_stats["保修-终身质保"])
+top10_fuwu = build_top10(internal_stats["服务产品"])
+top10_shangcheng = build_top10(internal_stats["商城安装"])
+
 # ================== 输出验证 ==================
 print("✅ 数据读取完成")
+end_time = time.time()
 import time
 
-end_time = time.time()
+
 
 print(f"⏱ 当前耗时: {end_time - start_time:.2f} 秒")
 
@@ -397,7 +427,18 @@ analysis_data = {
 
 for cat, val, label in zip(categories, values, labels):
     if label in analysis_data:
-        analysis_data[label].append({'name': cat, 'value': val})
+        analysis_data[label].append({
+            'name': cat,
+            'value': val
+        })
+
+# TOP8限制
+for k in analysis_data:
+    analysis_data[k] = sorted(
+        analysis_data[k],
+        key=lambda x: abs(x['value']),
+        reverse=True
+    )[:8]
 
 # 计算总结数据
 total_weibao = sum(item['value'] for item in analysis_data['收入端-维修保养'])
@@ -421,7 +462,8 @@ def get_performance(value):
 
 
 # 生成 HTML
-html_content = f"""<!DOCTYPE html>
+html_parts = []  
+html_parts.append(f"""<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -773,7 +815,7 @@ for i, cat in enumerate(taici_categories):
     change_rate = (change / last * 100) if last != 0 else 0
     change_class = 'positive' if change > 0 else 'negative' if change < 0 else ''
 
-    html_content += f"""
+    html_parts.append(f"""
                 <tr>
                     <td class="category">{cat}</td>
                     <td>{current:.2f}</td>
@@ -782,7 +824,7 @@ for i, cat in enumerate(taici_categories):
                     <td class="{change_class}">{change_rate:+.2f}%</td>
                 </tr>"""
 
-html_content += f"""
+html_parts.append(f"""
             </tbody>
         </table>
 
@@ -820,7 +862,7 @@ for rank, proj in enumerate(top20_projects, 1):
     qty_change_class = 'positive' if qty_change > 0 else 'negative' if qty_change < 0 else ''
     maoli_change_class = 'positive' if maoli_change > 0 else 'negative' if maoli_change < 0 else ''
 
-    html_content += f"""
+    html_parts.append(f"""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category">{proj['name']}</td>
@@ -834,7 +876,7 @@ for rank, proj in enumerate(top20_projects, 1):
                     <td class="{maoli_change_class}">{maoli_rate:+.1f}%</td>
                 </tr>"""
 
-html_content += f"""
+html_parts.append(f"""
             </tbody>
         </table>
 
@@ -861,7 +903,7 @@ for i, cat in enumerate(hunhe_categories):
     change_rate = (change / last * 100) if last != 0 else 0
     change_class = 'positive' if change > 0 else 'negative' if change < 0 else ''
 
-    html_content += f"""
+    html_parts.append(f"""
                 <tr>
                     <td class="category">{cat}</td>
                     <td>{current:.2f}</td>
@@ -870,7 +912,7 @@ for i, cat in enumerate(hunhe_categories):
                     <td class="{change_class}">{change_rate:+.2f}%</td>
                 </tr>"""
 
-html_content += f"""
+html_parts.append(f"""
             </tbody>
         </table>
 
@@ -908,7 +950,7 @@ for rank, prod in enumerate(top20_hunhe_products, 1):
     qty_change_class = 'positive' if qty_change > 0 else 'negative' if qty_change < 0 else ''
     maoli_change_class = 'positive' if maoli_change > 0 else 'negative' if maoli_change < 0 else ''
 
-    html_content += f"""
+    html_parts.append(f"""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category">{prod['name']}</td>
@@ -922,7 +964,7 @@ for rank, prod in enumerate(top20_hunhe_products, 1):
                     <td class="{maoli_change_class}">{maoli_rate:+.1f}%</td>
                 </tr>"""
 
-html_content += f"""
+html_parts.append(f"""
             </tbody>
         </table>
 
@@ -949,7 +991,7 @@ for i, cat in enumerate(neibu_categories):
     change_rate = (change / last * 100) if last != 0 else 0
     change_class = 'positive' if change > 0 else 'negative' if change < 0 else ''
 
-    html_content += f"""
+    html_parts.append(f"""
                 <tr>
                     <td class="category">{cat}</td>
                     <td>{current:.2f}</td>
@@ -958,7 +1000,7 @@ for i, cat in enumerate(neibu_categories):
                     <td class="{change_class}">{change_rate:+.2f}%</td>
                 </tr>"""
 
-html_content += f"""
+html_parts.append(f"""
             </tbody>
         </table>
 
@@ -996,7 +1038,7 @@ for rank in range(1, 11):  # 固定显示10行
         qty_change_class = 'positive' if qty_change > 0 else 'negative' if qty_change < 0 else ''
         maoli_change_class = 'positive' if maoli_change > 0 else 'negative' if maoli_change < 0 else ''
 
-        html_content += f"""
+        html_parts.append(f"""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category">{proj['name']}</td>
@@ -1011,7 +1053,7 @@ for rank in range(1, 11):  # 固定显示10行
                 </tr>"""
     else:
         # 填充空行
-        html_content += f"""
+        html_parts.append(f"""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category" style="color: #ccc;">-</td>
@@ -1025,7 +1067,7 @@ for rank in range(1, 11):  # 固定显示10行
                     <td style="color: #ccc;">-</td>
                 </tr>"""
 
-html_content += f"""
+html_parts.append(f"""
             </tbody>
         </table>
             </div>
@@ -1061,7 +1103,7 @@ for rank in range(1, 11):  # 固定显示10行
         qty_change_class = 'positive' if qty_change > 0 else 'negative' if qty_change < 0 else ''
         maoli_change_class = 'positive' if maoli_change > 0 else 'negative' if maoli_change < 0 else ''
 
-        html_content += f"""
+        html_parts.append(f"""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category">{proj['name']}</td>
@@ -1076,7 +1118,7 @@ for rank in range(1, 11):  # 固定显示10行
                 </tr>"""
     else:
         # 填充空行
-        html_content += f"""
+        html_parts.append(f"""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category" style="color: #ccc;">-</td>
@@ -1090,7 +1132,7 @@ for rank in range(1, 11):  # 固定显示10行
                     <td style="color: #ccc;">-</td>
                 </tr>"""
 
-html_content += f"""
+html_parts.append(f"""
             </tbody>
         </table>
             </div>
@@ -1126,7 +1168,7 @@ for rank in range(1, 11):  # 固定显示10行
         qty_change_class = 'positive' if qty_change > 0 else 'negative' if qty_change < 0 else ''
         maoli_change_class = 'positive' if maoli_change > 0 else 'negative' if maoli_change < 0 else ''
 
-        html_content += f"""
+        html_parts.append(f"""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category">{proj['name']}</td>
@@ -1141,7 +1183,7 @@ for rank in range(1, 11):  # 固定显示10行
                 </tr>"""
     else:
         # 填充空行
-        html_content += f"""
+        html_parts.append(f"""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category" style="color: #ccc;">-</td>
@@ -1155,7 +1197,7 @@ for rank in range(1, 11):  # 固定显示10行
                     <td style="color: #ccc;">-</td>
                 </tr>"""
 
-html_content += f"""
+html_parts.append(f"""
             </tbody>
         </table>
             </div>
@@ -1191,7 +1233,7 @@ for rank in range(1, 11):  # 固定显示10行
         qty_change_class = 'positive' if qty_change > 0 else 'negative' if qty_change < 0 else ''
         maoli_change_class = 'positive' if maoli_change > 0 else 'negative' if maoli_change < 0 else ''
 
-        html_content += f"""
+        html_parts.append(f"""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category">{proj['name']}</td>
@@ -1206,7 +1248,7 @@ for rank in range(1, 11):  # 固定显示10行
                 </tr>"""
     else:
         # 填充空行
-        html_content += f"""
+        html_parts.append(f"""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category" style="color: #ccc;">-</td>
@@ -1220,7 +1262,7 @@ for rank in range(1, 11):  # 固定显示10行
                     <td style="color: #ccc;">-</td>
                 </tr>"""
 
-html_content += f"""
+html_parts.append(f"""
             </tbody>
         </table>
             </div>
@@ -1256,7 +1298,7 @@ for rank in range(1, 11):  # 固定显示10行
         qty_change_class = 'positive' if qty_change > 0 else 'negative' if qty_change < 0 else ''
         maoli_change_class = 'positive' if maoli_change > 0 else 'negative' if maoli_change < 0 else ''
 
-        html_content += f"""
+        html_parts.append(f"""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category">{prod['name']}</td>
@@ -1271,7 +1313,7 @@ for rank in range(1, 11):  # 固定显示10行
                 </tr>"""
     else:
         # 填充空行
-        html_content += f"""
+        html_parts.append(f"""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category" style="color: #ccc;">-</td>
@@ -1285,7 +1327,7 @@ for rank in range(1, 11):  # 固定显示10行
                     <td style="color: #ccc;">-</td>
                 </tr>"""
 
-html_content += f"""
+html_parts.append(f"""
             </tbody>
         </table>
 
@@ -1297,7 +1339,7 @@ level1_costs = {}
 level2_costs = {}
 level3_costs = {}
 
-for item in mendian_data:
+for item in mendian_data[:50]:
     change = item['current'] - item['last']
     change_rate = (change / item['last'] * 100) if item['last'] != 0 else 0
 
@@ -1321,7 +1363,7 @@ for item in mendian_data:
 # 建立层级关系（简单方式：按顺序关联）
 current_level1 = None
 current_level2 = None
-for item in mendian_data:
+for item in mendian_data[:50]:
     if item['level'] == 1:
         current_level1 = item['category']
         current_level2 = None
@@ -1388,7 +1430,7 @@ conclusion_html += "</ul>"
 
 mendian_conclusion = conclusion_html
 
-html_content += f"""
+html_parts.append(f"""
         <div style="background: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px 20px; margin: 20px 0; border-radius: 4px; line-height: 1.8;">
             <div style="display: flex; align-items: flex-start;">
                 <span style="font-size: 24px; margin-right: 10px;">💰</span>
@@ -1411,7 +1453,7 @@ html_content += f"""
             <tbody>"""
 
 # 生成门店运营成本表格行
-for item in mendian_data:
+for item in mendian_data[:50]:
     current = item['current']
     last = item['last']
     change = current - last
@@ -1430,7 +1472,7 @@ for item in mendian_data:
         row_style = ''
         cat_style = 'padding-left: 40px;'
 
-    html_content += f"""
+    html_parts.append(f"""
                 <tr style="{row_style}">
                     <td class="category" style="{cat_style}">{item['category']}</td>
                     <td>{current:.2f}</td>
@@ -1439,7 +1481,7 @@ for item in mendian_data:
                     <td class="{change_class}">{change_rate:+.2f}%</td>
                 </tr>"""
 
-html_content += f"""
+html_parts.append(f"""
             </tbody>
         </table>
     </div>
@@ -1669,7 +1711,7 @@ html_content += f"""
     </script>
 </body>
 </html>"""
-
+html_content = "".join(html_parts)
 # 保存 HTML 文件
 with open(config['output_html_path'], "w", encoding="utf-8") as f:
     f.write(html_content)
