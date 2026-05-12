@@ -462,7 +462,7 @@ def get_performance(value):
 
 
 # 生成 HTML
-html_parts = []  
+html_parts = []
 html_parts.append("""<!DOCTYPE html>
 <html>
 <head>
@@ -806,7 +806,7 @@ html_parts.append("""<!DOCTYPE html>
                 </tr>
             </thead>
             <tbody>
-            """
+            """)
 
 # 生成表格行
 for i, cat in enumerate(taici_categories):
@@ -823,7 +823,7 @@ for i, cat in enumerate(taici_categories):
                     <td>{last:.2f}</td>
                     <td class="{change_class}">{change:+.2f}</td>
                     <td class="{change_class}">{change_rate:+.2f}%</td>
-                </tr>"""
+                </tr>""")
 
 html_parts.append("""
             </tbody>
@@ -852,7 +852,7 @@ html_parts.append("""
                 </tr>
             </thead>
             <tbody>
-            """
+            """)
 
 # 生成TOP20项目表格行
 for rank, proj in enumerate(top20_projects, 1):
@@ -876,7 +876,7 @@ for rank, proj in enumerate(top20_projects, 1):
                     <td>{proj['last_maoli']:.2f}</td>
                     <td class="{maoli_change_class}">{maoli_change:+.2f}</td>
                     <td class="{maoli_change_class}">{maoli_rate:+.1f}%</td>
-                </tr>"""
+                </tr>""")
 
 html_parts.append("""
             </tbody>
@@ -896,7 +896,7 @@ html_parts.append("""
                 </tr>
             </thead>
             <tbody>
-            """
+            """)
 
 # 生成混合维修表格行
 for i, cat in enumerate(hunhe_categories):
@@ -913,7 +913,7 @@ for i, cat in enumerate(hunhe_categories):
                     <td>{last:.2f}</td>
                     <td class="{change_class}">{change:+.2f}</td>
                     <td class="{change_class}">{change_rate:+.2f}%</td>
-                </tr>"""
+                </tr>""")
 
 html_parts.append("""
             </tbody>
@@ -942,7 +942,7 @@ html_parts.append("""
                 </tr>
             </thead>
             <tbody>
-            """
+            """)
 
 # 生成混合维修TOP20商品表格行
 for rank, prod in enumerate(top20_hunhe_products, 1):
@@ -966,7 +966,7 @@ for rank, prod in enumerate(top20_hunhe_products, 1):
                     <td>{prod['last_maoli']:.2f}</td>
                     <td class="{maoli_change_class}">{maoli_change:+.2f}</td>
                     <td class="{maoli_change_class}">{maoli_rate:+.1f}%</td>
-                </tr>"""
+                </tr>""")
 
 html_parts.append("""
             </tbody>
@@ -986,7 +986,7 @@ html_parts.append("""
                 </tr>
             </thead>
             <tbody>
-            """
+            """)
 
 # 生成内部维修表格行
 for i, cat in enumerate(neibu_categories):
@@ -1003,7 +1003,7 @@ for i, cat in enumerate(neibu_categories):
                     <td>{last:.2f}</td>
                     <td class="{change_class}">{change:+.2f}</td>
                     <td class="{change_class}">{change_rate:+.2f}%</td>
-                </tr>"""
+                </tr>""")
 
 html_parts.append("""
             </tbody>
@@ -1030,7 +1030,7 @@ html_parts.append("""
                 </tr>
             </thead>
             <tbody>
-            """
+            """)
 
 # 生成保修-质保TOP10表格行
 for rank in range(1, 11):  # 固定显示10行
@@ -1056,7 +1056,7 @@ for rank in range(1, 11):  # 固定显示10行
                     <td>{proj['last_maoli']:.2f}</td>
                     <td class="{maoli_change_class}">{maoli_change:+.2f}</td>
                     <td class="{maoli_change_class}">{maoli_rate:+.1f}%</td>
-                </tr>"""
+                </tr>""")
     else:
         # 填充空行
         html_parts.append("""
@@ -1071,7 +1071,7 @@ for rank in range(1, 11):  # 固定显示10行
                     <td style="color: #ccc;">-</td>
                     <td style="color: #ccc;">-</td>
                     <td style="color: #ccc;">-</td>
-                </tr>"""
+                </tr>""")
 
 html_parts.append("""
             </tbody>
@@ -1096,7 +1096,7 @@ html_parts.append("""
                 </tr>
             </thead>
             <tbody>
-            """
+            """)
 
 # 生成保修-技术升级TOP10表格行
 for rank in range(1, 11):  # 固定显示10行
@@ -1122,7 +1122,7 @@ for rank in range(1, 11):  # 固定显示10行
                     <td>{proj['last_maoli']:.2f}</td>
                     <td class="{maoli_change_class}">{maoli_change:+.2f}</td>
                     <td class="{maoli_change_class}">{maoli_rate:+.1f}%</td>
-                </tr>"""
+                </tr>""")
     else:
         # 填充空行
         html_parts.append("""
@@ -1137,7 +1137,7 @@ for rank in range(1, 11):  # 固定显示10行
                     <td style="color: #ccc;">-</td>
                     <td style="color: #ccc;">-</td>
                     <td style="color: #ccc;">-</td>
-                </tr>"""
+                </tr>""")
 
 html_parts.append("""
             </tbody>
@@ -1162,7 +1162,7 @@ html_parts.append("""
                 </tr>
             </thead>
             <tbody>
-            """
+            """)
 
 # 生成保修-终身质保TOP10表格行
 for rank in range(1, 11):  # 固定显示10行
@@ -1188,7 +1188,7 @@ for rank in range(1, 11):  # 固定显示10行
                     <td>{proj['last_maoli']:.2f}</td>
                     <td class="{maoli_change_class}">{maoli_change:+.2f}</td>
                     <td class="{maoli_change_class}">{maoli_rate:+.1f}%</td>
-                </tr>"""
+                </tr>""")
     else:
         # 填充空行
         html_parts.append("""
@@ -1203,7 +1203,7 @@ for rank in range(1, 11):  # 固定显示10行
                     <td style="color: #ccc;">-</td>
                     <td style="color: #ccc;">-</td>
                     <td style="color: #ccc;">-</td>
-                </tr>"""
+                </tr>""")
 
 html_parts.append("""
             </tbody>
@@ -1228,7 +1228,7 @@ html_parts.append("""
                 </tr>
             </thead>
             <tbody>
-            """
+            """)
 
 # 生成服务产品TOP10表格行
 for rank in range(1, 11):  # 固定显示10行
@@ -1254,7 +1254,7 @@ for rank in range(1, 11):  # 固定显示10行
                     <td>{proj['last_maoli']:.2f}</td>
                     <td class="{maoli_change_class}">{maoli_change:+.2f}</td>
                     <td class="{maoli_change_class}">{maoli_rate:+.1f}%</td>
-                </tr>"""
+                </tr>""")
     else:
         # 填充空行
         html_parts.append("""
@@ -1269,7 +1269,7 @@ for rank in range(1, 11):  # 固定显示10行
                     <td style="color: #ccc;">-</td>
                     <td style="color: #ccc;">-</td>
                     <td style="color: #ccc;">-</td>
-                </tr>"""
+                </tr>""")
 
 html_parts.append("""
             </tbody>
@@ -1294,7 +1294,7 @@ html_parts.append("""
                 </tr>
             </thead>
             <tbody>
-            """
+            """)
 
 # 生成商城安装TOP10表格行
 for rank in range(1, 11):  # 固定显示10行
@@ -1320,7 +1320,7 @@ for rank in range(1, 11):  # 固定显示10行
                     <td>{prod['last_maoli']:.2f}</td>
                     <td class="{maoli_change_class}">{maoli_change:+.2f}</td>
                     <td class="{maoli_change_class}">{maoli_rate:+.1f}%</td>
-                </tr>"""
+                </tr>""")
     else:
         # 填充空行
         html_parts.append("""
@@ -1335,13 +1335,13 @@ for rank in range(1, 11):  # 固定显示10行
                     <td style="color: #ccc;">-</td>
                     <td style="color: #ccc;">-</td>
                     <td style="color: #ccc;">-</td>
-                </tr>"""
+                </tr>""")
 
 html_parts.append("""
             </tbody>
         </table>
 
-        <div class="section-title" style="margin-top: 50px;">五、门店运营成本分析</div>"""
+        <div class="section-title" style="margin-top: 50px;">五、门店运营成本分析</div>""")
 
 # 生成门店运营成本分析结论（层级分析法）
 # 按层级组织数据
@@ -1461,7 +1461,7 @@ html_parts.append("""
                 </tr>
             </thead>
             <tbody>
-            """
+            """)
 
 # 生成门店运营成本表格行
 for item in mendian_data[:50]:
@@ -1490,7 +1490,7 @@ for item in mendian_data[:50]:
                     <td>{last:.2f}</td>
                     <td class="{change_class}">{change:+.2f}</td>
                     <td class="{change_class}">{change_rate:+.2f}%</td>
-                </tr>"""
+                </tr>""")
 
 html_parts.append("""
             </tbody>
@@ -1721,7 +1721,7 @@ html_parts.append("""
         }});
     </script>
 </body>
-</html>"""
+</html>""")
 html_content = "".join(html_parts)
 # 保存 HTML 文件
 with open(config['output_html_path'], "w", encoding="utf-8") as f:
