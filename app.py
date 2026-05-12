@@ -218,7 +218,7 @@ def main():
                         [sys.executable, temp_script],
                         capture_output=True,
                         text=True,
-                        timeout=60,
+                        timeout=600,
                         cwd=tmpdir
                     )
 
