@@ -186,48 +186,75 @@ last_period = periods[1] if len(periods) > 1 else ""
 
 
 
+# ================== 单次遍历：轮胎识别 + 维保/混合/内部 所有统计 ==================
 tire_project_codes = set()
 
+# 第一遍：只识别轮胎项目编码
 for row in data_rows:
     if get_val(row, "商品类型名称") == "零件" and get_val(row, "商品名称") == "轮胎":
         code = get_val(row, "维修项目编码")
         if code:
             tire_project_codes.add(str(code))
 
-# ================== 维保TOP20 ==================
-
-
-
+# ================== 第二遍：一次性完成所有统计 ==================
 project_stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
+hunhe_stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
+internal_stats = {
+    "保修-质保": defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0}),
+    "保修-技术升级": defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0}),
+    "保修-终身质保": defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0}),
+    "服务产品": defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0}),
+    "商城安装": defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0}),
+}
 
 for row in data_rows:
     period = str(get_val(row, "账期月份") or "")
-    project_name_raw = get_val(row, "维修项目名称")
-    project_code = get_val(row, "维修项目编码")
-    income_type = get_val(row, "收入类型")
-
-    if not project_name_raw or income_type == "混合维修":
+    if period not in (current_period, last_period):
         continue
 
-    # 轮胎归类
-    if project_code and str(project_code) in tire_project_codes:
-        project_name = "轮胎"
-    else:
-        project_name = str(project_name_raw)
-
+    income_type = get_val(row, "收入类型")
     qty = float(get_val(row, "商品数量") or 0)
-    revenue = float(get_val(row, "实收") or 0)
-    cost = float(get_val(row, "主机厂零件实收") or 0)
-    maoli = revenue - cost
+    is_current = (period == current_period)
 
-    if period == current_period:
-        project_stats[project_name]['current_qty'] += qty
-        project_stats[project_name]['current_maoli'] += maoli
-    elif period == last_period:
-        project_stats[project_name]['last_qty'] += qty
-        project_stats[project_name]['last_maoli'] += maoli
+    # 维保TOP20
+    project_name_raw = get_val(row, "维修项目名称")
+    if project_name_raw and income_type != "混合维修":
+        project_code = get_val(row, "维修项目编码")
+        project_name = "轮胎" if (project_code and str(project_code) in tire_project_codes) else str(project_name_raw)
+        revenue = float(get_val(row, "实收") or 0)
+        cost = float(get_val(row, "主机厂零件实收") or 0)
+        maoli = revenue - cost
+        s = project_stats[project_name]
+        if is_current:
+            s['current_qty'] += qty; s['current_maoli'] += maoli
+        else:
+            s['last_qty'] += qty; s['last_maoli'] += maoli
 
-# 排序
+    # 混合维修TOP20
+    if income_type == "混合维修":
+        name = get_val(row, "商品名称")
+        if name:
+            revenue = float(get_val(row, "实收") or 0)
+            cost = float(get_val(row, "主机厂零件实收") or 0)
+            maoli = revenue - cost
+            s = hunhe_stats[name]
+            if is_current:
+                s['current_qty'] += qty; s['current_maoli'] += maoli
+            else:
+                s['last_qty'] += qty; s['last_maoli'] += maoli
+
+    # 内部结算
+    if income_type in internal_stats:
+        name = get_val(row, "商品名称") if income_type in ("混合维修", "商城安装") else get_val(row, "维修项目名称")
+        if name:
+            maoli = float(get_val(row, "内部结算收入") or 0)
+            s = internal_stats[income_type][name]
+            if is_current:
+                s['current_qty'] += qty; s['current_maoli'] += maoli
+            else:
+                s['last_qty'] += qty; s['last_maoli'] += maoli
+
+# ================== 排序：维保TOP20 ==================
 top20_projects = []
 tire_project = None
 
@@ -243,98 +270,23 @@ for name, s in project_stats.items():
             'total_maoli': total
         }
         top20_projects.append(data)
-
         if name == "轮胎":
             tire_project = data
 
 top20_projects.sort(key=lambda x: x['total_maoli'], reverse=True)
 top20_projects = top20_projects[:20]
-
 if tire_project and tire_project not in top20_projects:
     top20_projects.append(tire_project)
 
-# ================== 混合维修TOP20 ==================
-
-
-
-hunhe_stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
-
-for row in data_rows:
-    if get_val(row, "收入类型") != "混合维修":
-        continue
-
-    name = get_val(row, "商品名称")
-    if not name:
-        continue
-
-    period = str(get_val(row, "账期月份") or "")
-    qty = float(get_val(row, "商品数量") or 0)
-    revenue = float(get_val(row, "实收") or 0)
-    cost = float(get_val(row, "主机厂零件实收") or 0)
-    maoli = revenue - cost
-
-    if period == current_period:
-        hunhe_stats[name]['current_qty'] += qty
-        hunhe_stats[name]['current_maoli'] += maoli
-    elif period == last_period:
-        hunhe_stats[name]['last_qty'] += qty
-        hunhe_stats[name]['last_maoli'] += maoli
-
+# ================== 排序：混合维修TOP20 ==================
 top20_hunhe = []
 for k, v in hunhe_stats.items():
     total = v['current_maoli'] + v['last_maoli']
     if abs(total) > 0.01:
-        top20_hunhe.append({
-            'name': k,
-            **v,
-            'total_maoli': total
-        })
+        top20_hunhe.append({'name': k, **v, 'total_maoli': total})
 
 top20_hunhe.sort(key=lambda x: x['total_maoli'], reverse=True)
 top20_hunhe = top20_hunhe[:20]
-
-# ================== 内部结算（示例：质保） ==================
-internal_stats = {
-    "保修-质保": defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0}),
-    "保修-技术升级": defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0}),
-    "保修-终身质保": defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0}),
-    "服务产品": defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0}),
-    "商城安装": defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0}),
-}
-
-# 重新读取数据
-
-
-
-
-for row in data_rows:
-
-    income_type = get_val(row, "收入类型")
-
-    if income_type not in internal_stats:
-        continue
-
-    if income_type in ["混合维修", "商城安装"]:
-        name = get_val(row, "商品名称")
-    else:
-        name = get_val(row, "维修项目名称")
-
-    if not name:
-        continue
-
-    period = str(get_val(row, "账期月份") or "")
-    qty = float(get_val(row, "商品数量") or 0)
-    maoli = float(get_val(row, "内部结算收入") or 0)
-
-    stats = internal_stats[income_type][name]
-
-    if period == current_period:
-        stats['current_qty'] += qty
-        stats['current_maoli'] += maoli
-
-    elif period == last_period:
-        stats['last_qty'] += qty
-        stats['last_maoli'] += maoli
 
 
 def build_top10(stats_dict):
