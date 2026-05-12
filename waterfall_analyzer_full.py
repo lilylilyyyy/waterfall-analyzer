@@ -143,27 +143,34 @@ with open(config_path, 'r', encoding='utf-8') as f:
     config = json.load(f)
 
 # ================== 读取明细表 ==================
-wb2 = openpyxl.load_workbook(config['detail_excel_path'], data_only=True)
+wb2 = openpyxl.load_workbook(
+    config['detail_excel_path'],
+    data_only=True,
+    read_only=True
+)
 ws2 = wb2.active
 
-# ================== 🔥 构建字段映射（核心升级） ==================
-header_map = {}
-for col in range(1, ws2.max_column + 1):
-    header = ws2.cell(row=1, column=col).value
-    if header:
-        header_map[str(header).strip()] = col
+# ================== 🔥 内存数据读取（性能优化） ==================
+rows_data = list(ws2.iter_rows(values_only=True))
+
+headers = rows_data[0]
+
+header_map = {
+    str(v).strip(): idx
+    for idx, v in enumerate(headers)
+    if v
+}
 
 def get_val(row, field):
-    """安全取值"""
-    col = header_map.get(field)
-    if not col:
+    idx = header_map.get(field)
+    if idx is None:
         return None
-    return ws2.cell(row=row, column=col).value
+    return row[idx]
 
 # ================== 账期识别 ==================
 period_set = set()
-for i in range(2, ws2.max_row + 1):
-    val = get_val(i, "账期月份")
+for row in rows_data[1:]:
+    val = get_val(row, "账期月份")
     if val:
         period_set.add(str(val))
 
@@ -174,20 +181,20 @@ last_period = periods[1] if len(periods) > 1 else ""
 # ================== 🔥 轮胎项目识别 ==================
 tire_project_codes = set()
 
-for i in range(2, ws2.max_row + 1):
-    if get_val(i, "商品类型名称") == "零件" and get_val(i, "商品名称") == "轮胎":
-        code = get_val(i, "维修项目编码")
+for row in rows_data[1:]:
+    if get_val(row, "商品类型名称") == "零件" and get_val(row, "商品名称") == "轮胎":
+        code = get_val(row, "维修项目编码")
         if code:
             tire_project_codes.add(str(code))
 
 # ================== 维保TOP20 ==================
 project_stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
 
-for i in range(2, ws2.max_row + 1):
-    period = str(get_val(i, "账期月份") or "")
-    project_name_raw = get_val(i, "维修项目名称")
-    project_code = get_val(i, "维修项目编码")
-    income_type = get_val(i, "收入类型")
+for row in rows_data[1:]:
+    period = str(get_val(row, "账期月份") or "")
+    project_name_raw = get_val(row, "维修项目名称")
+    project_code = get_val(row, "维修项目编码")
+    income_type = get_val(row, "收入类型")
 
     if not project_name_raw or income_type == "混合维修":
         continue
@@ -198,9 +205,9 @@ for i in range(2, ws2.max_row + 1):
     else:
         project_name = str(project_name_raw)
 
-    qty = float(get_val(i, "商品数量") or 0)
-    revenue = float(get_val(i, "实收") or 0)
-    cost = float(get_val(i, "主机厂零件实收") or 0)
+    qty = float(get_val(row, "商品数量") or 0)
+    revenue = float(get_val(row, "实收") or 0)
+    cost = float(get_val(row, "主机厂零件实收") or 0)
     maoli = revenue - cost
 
     if period == current_period:
@@ -239,18 +246,18 @@ if tire_project and tire_project not in top20_projects:
 # ================== 混合维修TOP20 ==================
 hunhe_stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
 
-for i in range(2, ws2.max_row + 1):
-    if get_val(i, "收入类型") != "混合维修":
+for row in rows_data[1:]:
+    if get_val(row, "收入类型") != "混合维修":
         continue
 
-    name = get_val(i, "商品名称")
+    name = get_val(row, "商品名称")
     if not name:
         continue
 
-    period = str(get_val(i, "账期月份") or "")
-    qty = float(get_val(i, "商品数量") or 0)
-    revenue = float(get_val(i, "实收") or 0)
-    cost = float(get_val(i, "主机厂零件实收") or 0)
+    period = str(get_val(row, "账期月份") or "")
+    qty = float(get_val(row, "商品数量") or 0)
+    revenue = float(get_val(row, "实收") or 0)
+    cost = float(get_val(row, "主机厂零件实收") or 0)
     maoli = revenue - cost
 
     if period == current_period:
@@ -277,28 +284,28 @@ top20_hunhe = top20_hunhe[:20]
 def build_internal_top10(type_name):
     stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
 
-    for i in range(2, ws2.max_row + 1):
-        if get_val(i, "收入类型") != type_name:
+    for row in rows_data[1:]:
+        if get_val(row, "收入类型") != type_name:
             continue
 
         # 🔥 核心改动：按类型选字段
         if type_name in ["混合维修", "商城安装"]:
-            name = get_val(i, "商品名称")
+            name = get_val(row, "商品名称")
         else:
-            name = get_val(i, "维修项目名称")
+            name = get_val(row, "维修项目名称")
 
         if not name:
             continue
 
-        period = str(get_val(i, "账期月份") or "")
-        qty = float(get_val(i, "商品数量") or 0)
+        period = str(get_val(row, "账期月份") or "")
+        qty = float(get_val(row, "商品数量") or 0)
 
         # 🔥 内部结算 vs 普通毛利
         if type_name in ["保修-质保", "保修-技术升级", "保修-终身质保", "服务产品", "商城安装"]:
-            maoli = float(get_val(i, "内部结算收入") or 0)
+            maoli = float(get_val(row, "内部结算收入") or 0)
         else:
-            revenue = float(get_val(i, "实收") or 0)
-            cost = float(get_val(i, "主机厂零件实收") or 0)
+            revenue = float(get_val(row, "实收") or 0)
+            cost = float(get_val(row, "主机厂零件实收") or 0)
             maoli = revenue - cost
 
         if period == current_period:
@@ -328,6 +335,14 @@ top10_fuwu = build_internal_top10("服务产品")
 top10_shangcheng = build_internal_top10("商城安装")
 # ================== 输出验证 ==================
 print("✅ 数据读取完成")
+import time
+
+end_time = time.time()
+
+print(f"⏱ 当前耗时: {end_time - start_time:.2f} 秒")
+
+if end_time - start_time > 120:
+    print("⚠️ 分析超时，请检查数据量或优化代码")
 print(f"当前账期: {current_period}")
 print(f"上期账期: {last_period}")
 print(f"维保TOP20数量: {len(top20_projects)}")
