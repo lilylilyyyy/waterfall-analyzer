@@ -323,7 +323,7 @@ end_time = time.time()
 
 print(f"⏱ 当前耗时: {end_time - start_time:.2f} 秒")
 
-if end_time - start_time > 120:
+if end_time - start_time > 600:
     print("⚠️ 分析超时，请检查数据量或优化代码")
 print(f"当前账期: {current_period}")
 print(f"上期账期: {last_period}")
