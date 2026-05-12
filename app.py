@@ -248,7 +248,7 @@ def main():
 
                     # 显示统计信息（从输出中解析）
                     st.subheader("📈 数据统计")
-                    if "Data Summary" in result.stdout:
+                    if result.stdout and "Data Summary" in result.stdout:
                         summary_lines = result.stdout.split('\n')
                         for line in summary_lines:
                             if "Categories:" in line or "Data Range:" in line:
