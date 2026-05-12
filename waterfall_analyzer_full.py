@@ -463,7 +463,7 @@ def get_performance(value):
 
 # 生成 HTML
 html_parts = []  
-html_parts.append(f"""<!DOCTYPE html>
+html_parts.append("""<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -816,7 +816,7 @@ for i, cat in enumerate(taici_categories):
     change_rate = (change / last * 100) if last != 0 else 0
     change_class = 'positive' if change > 0 else 'negative' if change < 0 else ''
 
-    html_parts.append(f"""
+    html_parts.append("""
                 <tr>
                     <td class="category">{cat}</td>
                     <td>{current:.2f}</td>
@@ -825,7 +825,7 @@ for i, cat in enumerate(taici_categories):
                     <td class="{change_class}">{change_rate:+.2f}%</td>
                 </tr>"""
 
-html_parts.append(f"""
+html_parts.append("""
             </tbody>
         </table>
 
@@ -864,7 +864,7 @@ for rank, proj in enumerate(top20_projects, 1):
     qty_change_class = 'positive' if qty_change > 0 else 'negative' if qty_change < 0 else ''
     maoli_change_class = 'positive' if maoli_change > 0 else 'negative' if maoli_change < 0 else ''
 
-    html_parts.append(f"""
+    html_parts.append("""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category">{proj['name']}</td>
@@ -878,7 +878,7 @@ for rank, proj in enumerate(top20_projects, 1):
                     <td class="{maoli_change_class}">{maoli_rate:+.1f}%</td>
                 </tr>"""
 
-html_parts.append(f"""
+html_parts.append("""
             </tbody>
         </table>
 
@@ -906,7 +906,7 @@ for i, cat in enumerate(hunhe_categories):
     change_rate = (change / last * 100) if last != 0 else 0
     change_class = 'positive' if change > 0 else 'negative' if change < 0 else ''
 
-    html_parts.append(f"""
+    html_parts.append("""
                 <tr>
                     <td class="category">{cat}</td>
                     <td>{current:.2f}</td>
@@ -915,7 +915,7 @@ for i, cat in enumerate(hunhe_categories):
                     <td class="{change_class}">{change_rate:+.2f}%</td>
                 </tr>"""
 
-html_parts.append(f"""
+html_parts.append("""
             </tbody>
         </table>
 
@@ -954,7 +954,7 @@ for rank, prod in enumerate(top20_hunhe_products, 1):
     qty_change_class = 'positive' if qty_change > 0 else 'negative' if qty_change < 0 else ''
     maoli_change_class = 'positive' if maoli_change > 0 else 'negative' if maoli_change < 0 else ''
 
-    html_parts.append(f"""
+    html_parts.append("""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category">{prod['name']}</td>
@@ -968,7 +968,7 @@ for rank, prod in enumerate(top20_hunhe_products, 1):
                     <td class="{maoli_change_class}">{maoli_rate:+.1f}%</td>
                 </tr>"""
 
-html_parts.append(f"""
+html_parts.append("""
             </tbody>
         </table>
 
@@ -996,7 +996,7 @@ for i, cat in enumerate(neibu_categories):
     change_rate = (change / last * 100) if last != 0 else 0
     change_class = 'positive' if change > 0 else 'negative' if change < 0 else ''
 
-    html_parts.append(f"""
+    html_parts.append("""
                 <tr>
                     <td class="category">{cat}</td>
                     <td>{current:.2f}</td>
@@ -1005,7 +1005,7 @@ for i, cat in enumerate(neibu_categories):
                     <td class="{change_class}">{change_rate:+.2f}%</td>
                 </tr>"""
 
-html_parts.append(f"""
+html_parts.append("""
             </tbody>
         </table>
 
@@ -1044,7 +1044,7 @@ for rank in range(1, 11):  # 固定显示10行
         qty_change_class = 'positive' if qty_change > 0 else 'negative' if qty_change < 0 else ''
         maoli_change_class = 'positive' if maoli_change > 0 else 'negative' if maoli_change < 0 else ''
 
-        html_parts.append(f"""
+        html_parts.append("""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category">{proj['name']}</td>
@@ -1059,7 +1059,7 @@ for rank in range(1, 11):  # 固定显示10行
                 </tr>"""
     else:
         # 填充空行
-        html_parts.append(f"""
+        html_parts.append("""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category" style="color: #ccc;">-</td>
@@ -1073,7 +1073,7 @@ for rank in range(1, 11):  # 固定显示10行
                     <td style="color: #ccc;">-</td>
                 </tr>"""
 
-html_parts.append(f"""
+html_parts.append("""
             </tbody>
         </table>
             </div>
@@ -1110,7 +1110,7 @@ for rank in range(1, 11):  # 固定显示10行
         qty_change_class = 'positive' if qty_change > 0 else 'negative' if qty_change < 0 else ''
         maoli_change_class = 'positive' if maoli_change > 0 else 'negative' if maoli_change < 0 else ''
 
-        html_parts.append(f"""
+        html_parts.append("""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category">{proj['name']}</td>
@@ -1125,7 +1125,7 @@ for rank in range(1, 11):  # 固定显示10行
                 </tr>"""
     else:
         # 填充空行
-        html_parts.append(f"""
+        html_parts.append("""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category" style="color: #ccc;">-</td>
@@ -1139,7 +1139,7 @@ for rank in range(1, 11):  # 固定显示10行
                     <td style="color: #ccc;">-</td>
                 </tr>"""
 
-html_parts.append(f"""
+html_parts.append("""
             </tbody>
         </table>
             </div>
@@ -1176,7 +1176,7 @@ for rank in range(1, 11):  # 固定显示10行
         qty_change_class = 'positive' if qty_change > 0 else 'negative' if qty_change < 0 else ''
         maoli_change_class = 'positive' if maoli_change > 0 else 'negative' if maoli_change < 0 else ''
 
-        html_parts.append(f"""
+        html_parts.append("""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category">{proj['name']}</td>
@@ -1191,7 +1191,7 @@ for rank in range(1, 11):  # 固定显示10行
                 </tr>"""
     else:
         # 填充空行
-        html_parts.append(f"""
+        html_parts.append("""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category" style="color: #ccc;">-</td>
@@ -1205,7 +1205,7 @@ for rank in range(1, 11):  # 固定显示10行
                     <td style="color: #ccc;">-</td>
                 </tr>"""
 
-html_parts.append(f"""
+html_parts.append("""
             </tbody>
         </table>
             </div>
@@ -1242,7 +1242,7 @@ for rank in range(1, 11):  # 固定显示10行
         qty_change_class = 'positive' if qty_change > 0 else 'negative' if qty_change < 0 else ''
         maoli_change_class = 'positive' if maoli_change > 0 else 'negative' if maoli_change < 0 else ''
 
-        html_parts.append(f"""
+        html_parts.append("""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category">{proj['name']}</td>
@@ -1257,7 +1257,7 @@ for rank in range(1, 11):  # 固定显示10行
                 </tr>"""
     else:
         # 填充空行
-        html_parts.append(f"""
+        html_parts.append("""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category" style="color: #ccc;">-</td>
@@ -1271,7 +1271,7 @@ for rank in range(1, 11):  # 固定显示10行
                     <td style="color: #ccc;">-</td>
                 </tr>"""
 
-html_parts.append(f"""
+html_parts.append("""
             </tbody>
         </table>
             </div>
@@ -1308,7 +1308,7 @@ for rank in range(1, 11):  # 固定显示10行
         qty_change_class = 'positive' if qty_change > 0 else 'negative' if qty_change < 0 else ''
         maoli_change_class = 'positive' if maoli_change > 0 else 'negative' if maoli_change < 0 else ''
 
-        html_parts.append(f"""
+        html_parts.append("""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category">{prod['name']}</td>
@@ -1323,7 +1323,7 @@ for rank in range(1, 11):  # 固定显示10行
                 </tr>"""
     else:
         # 填充空行
-        html_parts.append(f"""
+        html_parts.append("""
                 <tr>
                     <td style="text-align: center; font-weight: bold; color: #666;">{rank}</td>
                     <td class="category" style="color: #ccc;">-</td>
@@ -1337,7 +1337,7 @@ for rank in range(1, 11):  # 固定显示10行
                     <td style="color: #ccc;">-</td>
                 </tr>"""
 
-html_parts.append(f"""
+html_parts.append("""
             </tbody>
         </table>
 
@@ -1440,7 +1440,7 @@ conclusion_html += "</ul>"
 
 mendian_conclusion = conclusion_html
 
-html_parts.append(f"""
+html_parts.append("""
         <div style="background: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px 20px; margin: 20px 0; border-radius: 4px; line-height: 1.8;">
             <div style="display: flex; align-items: flex-start;">
                 <span style="font-size: 24px; margin-right: 10px;">💰</span>
@@ -1483,7 +1483,7 @@ for item in mendian_data[:50]:
         row_style = ''
         cat_style = 'padding-left: 40px;'
 
-    html_parts.append(f"""
+    html_parts.append("""
                 <tr style="{row_style}">
                     <td class="category" style="{cat_style}">{item['category']}</td>
                     <td>{current:.2f}</td>
@@ -1492,7 +1492,7 @@ for item in mendian_data[:50]:
                     <td class="{change_class}">{change_rate:+.2f}%</td>
                 </tr>"""
 
-html_parts.append(f"""
+html_parts.append("""
             </tbody>
         </table>
     </div>
