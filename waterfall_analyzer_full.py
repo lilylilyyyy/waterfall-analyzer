@@ -184,8 +184,8 @@ for row in data_rows:
             tire_project_codes.add(str(code))
 
 # ================== 第二遍：一次性完成所有统计 ==================
-project_stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
-hunhe_stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0})
+project_stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0, 'current_revenue': 0, 'last_revenue': 0})
+hunhe_stats = defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0, 'current_revenue': 0, 'last_revenue': 0})
 internal_stats = {
     "保修-质保": defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0}),
     "保修-技术升级": defaultdict(lambda: {'current_qty': 0, 'last_qty': 0, 'current_maoli': 0, 'last_maoli': 0}),
@@ -213,9 +213,9 @@ for row in data_rows:
         maoli = revenue - cost
         s = project_stats[project_name]
         if is_current:
-            s['current_qty'] += qty; s['current_maoli'] += maoli
+            s['current_qty'] += qty; s['current_maoli'] += maoli; s['current_revenue'] += revenue
         else:
-            s['last_qty'] += qty; s['last_maoli'] += maoli
+            s['last_qty'] += qty; s['last_maoli'] += maoli; s['last_revenue'] += revenue
 
     # 混合维修TOP20
     if income_type == "混合维修":
@@ -226,9 +226,9 @@ for row in data_rows:
             maoli = revenue - cost
             s = hunhe_stats[name]
             if is_current:
-                s['current_qty'] += qty; s['current_maoli'] += maoli
+                s['current_qty'] += qty; s['current_maoli'] += maoli; s['current_revenue'] += revenue
             else:
-                s['last_qty'] += qty; s['last_maoli'] += maoli
+                s['last_qty'] += qty; s['last_maoli'] += maoli; s['last_revenue'] += revenue
 
     # 内部结算
     if income_type in internal_stats:
@@ -254,6 +254,8 @@ for name, s in project_stats.items():
             'last_qty': s['last_qty'],
             'current_maoli': s['current_maoli'],
             'last_maoli': s['last_maoli'],
+            'current_revenue': s['current_revenue'],
+            'last_revenue': s['last_revenue'],
             'total_maoli': total
         }
         top20_projects.append(data)
@@ -753,6 +755,8 @@ html_content += f"""
                     <th>上月毛利</th>
                     <th>毛利变化</th>
                     <th>变化率</th>
+                    <th>当月毛利率</th>
+                    <th>上月毛利率</th>
                 </tr>
             </thead>
             <tbody>"""
@@ -763,6 +767,8 @@ for rank, proj in enumerate(top20_projects, 1):
     qty_rate = (qty_change / proj['last_qty'] * 100) if proj['last_qty'] != 0 else 0
     maoli_change = proj['current_maoli'] - proj['last_maoli']
     maoli_rate = (maoli_change / proj['last_maoli'] * 100) if proj['last_maoli'] != 0 else 0
+    current_margin = (proj['current_maoli'] / proj['current_revenue'] * 100) if proj['current_revenue'] != 0 else 0
+    last_margin = (proj['last_maoli'] / proj['last_revenue'] * 100) if proj['last_revenue'] != 0 else 0
 
     qty_change_class = 'positive' if qty_change > 0 else 'negative' if qty_change < 0 else ''
     maoli_change_class = 'positive' if maoli_change > 0 else 'negative' if maoli_change < 0 else ''
@@ -779,6 +785,8 @@ for rank, proj in enumerate(top20_projects, 1):
                     <td>{proj['last_maoli']:.2f}</td>
                     <td class="{maoli_change_class}">{maoli_change:+.2f}</td>
                     <td class="{maoli_change_class}">{maoli_rate:+.1f}%</td>
+                    <td>{current_margin:.1f}%</td>
+                    <td>{last_margin:.1f}%</td>
                 </tr>"""
 
 html_content += f"""
@@ -841,6 +849,8 @@ html_content += f"""
                     <th>上月毛利</th>
                     <th>毛利变化</th>
                     <th>变化率</th>
+                    <th>当月毛利率</th>
+                    <th>上月毛利率</th>
                 </tr>
             </thead>
             <tbody>"""
@@ -851,6 +861,8 @@ for rank, prod in enumerate(top20_hunhe_products, 1):
     qty_rate = (qty_change / prod['last_qty'] * 100) if prod['last_qty'] != 0 else 0
     maoli_change = prod['current_maoli'] - prod['last_maoli']
     maoli_rate = (maoli_change / prod['last_maoli'] * 100) if prod['last_maoli'] != 0 else 0
+    current_margin = (prod['current_maoli'] / prod['current_revenue'] * 100) if prod.get('current_revenue') else 0
+    last_margin = (prod['last_maoli'] / prod['last_revenue'] * 100) if prod.get('last_revenue') else 0
 
     qty_change_class = 'positive' if qty_change > 0 else 'negative' if qty_change < 0 else ''
     maoli_change_class = 'positive' if maoli_change > 0 else 'negative' if maoli_change < 0 else ''
@@ -867,6 +879,8 @@ for rank, prod in enumerate(top20_hunhe_products, 1):
                     <td>{prod['last_maoli']:.2f}</td>
                     <td class="{maoli_change_class}">{maoli_change:+.2f}</td>
                     <td class="{maoli_change_class}">{maoli_rate:+.1f}%</td>
+                    <td>{current_margin:.1f}%</td>
+                    <td>{last_margin:.1f}%</td>
                 </tr>"""
 
 html_content += f"""
