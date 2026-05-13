@@ -209,7 +209,7 @@ for row in data_rows:
         project_code = get_val(row, "维修项目编码")
         project_name = "轮胎" if (project_code and str(project_code) in tire_project_codes) else str(project_name_raw)
         revenue = float(get_val(row, "实收") or 0)
-        cost = float(get_val(row, "主机厂零件实收") or 0)
+        cost = float(get_val(row, "门店零件成本") or 0)
         maoli = revenue - cost
         s = project_stats[project_name]
         if is_current:
@@ -222,7 +222,7 @@ for row in data_rows:
         name = get_val(row, "商品名称")
         if name:
             revenue = float(get_val(row, "实收") or 0)
-            cost = float(get_val(row, "主机厂零件实收") or 0)
+            cost = float(get_val(row, "门店零件成本") or 0)
             maoli = revenue - cost
             s = hunhe_stats[name]
             if is_current:
