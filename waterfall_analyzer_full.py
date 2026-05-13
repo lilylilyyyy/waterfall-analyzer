@@ -207,7 +207,12 @@ for row in data_rows:
     project_name_raw = get_val(row, "维修项目名称")
     if project_name_raw and income_type != "混合维修":
         project_code = get_val(row, "维修项目编码")
-        project_name = "轮胎" if (project_code and str(project_code) in tire_project_codes) else str(project_name_raw)
+        if project_code and str(project_code) in tire_project_codes:
+            project_name = "轮胎"
+        elif "冷媒" in str(project_name_raw):
+            project_name = "冷媒回收加注"
+        else:
+            project_name = str(project_name_raw)
         revenue = float(get_val(row, "实收") or 0)
         cost = float(get_val(row, "门店零件成本") or 0)
         maoli = revenue - cost
